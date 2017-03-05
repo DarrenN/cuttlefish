@@ -1,9 +1,12 @@
 #lang info
 (define collection "cuttlefish")
 (define deps '("base"
-               "rackunit-lib"))
+               "gregor"
+               "quickcheck"
+               "rackunit-lib"
+               "simple-http"))
 (define build-deps '("scribble-lib" "racket-doc"))
 (define scribblings '(("scribblings/cuttlefish.scrbl" ())))
-(define pkg-desc "Description Here")
-(define version "0.0")
-(define pkg-authors '(shibuya))
+(define pkg-desc "Orchestrate data gathering for Paperswelove.org")
+(define version "0.1")
+(define pkg-authors '(Darren_N))

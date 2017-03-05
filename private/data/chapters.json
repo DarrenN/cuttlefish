@@ -1,0 +1,30 @@
+{
+  "newyork": {
+    "title": "New York",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "papers-we-love"
+    }
+  },
+  "sanfrancisco": {
+    "title": "San Francisco",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "papers-we-love-too"
+    }
+  },
+  "london": {
+    "title": "London",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "papers-we-love-london"
+    }
+  },
+  "portland": {
+    "title": "Portland",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "Papers-We-Love-pdx"
+    }
+  }
+}
