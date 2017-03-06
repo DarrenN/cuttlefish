@@ -33,5 +33,12 @@
       "adapter": "meetup",
       "id": "Papers-We-Love-Boston"
     }
+  },
+  "stlouis": {
+    "title": "St. Louis",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "Papers-We-Love-in-saint-louis"
+    }
   }
 }

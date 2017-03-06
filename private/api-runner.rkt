@@ -6,8 +6,11 @@
          "logger.rkt"
          "workers/meetup.rkt")
 
+;; ================
 ;; Worker Functions
+;; ================
 ;; Define worker functions by their adapter key from the chapter.json files
+
 (define WORKERS
   (hash "meetup" worker-meetup))
 
@@ -20,25 +23,31 @@
 (define thread-count (box 0))
 (define state (box '()))
 
-;; logging
+
+;; Logging
+;; =======
 ;; TODO: path should be set by ARGS or ENV vars
 (define logging-thread
   (launch-log-daemon (build-path "/tmp") "racket-test-logger"))
 
+;; Read JSON
+;; =========
 ;; If we can't open the chapters file then crash out
 (if (file-exists? CHAPTERS_JSON)
     (begin
       (set-box! chapters
                 (call-with-input-file CHAPTERS_JSON (λ (in) (read-json in))))
       (set-box! thread-count
-                (min 10 (length (hash-keys (unbox chapters))))))
+                (length (hash-keys (unbox chapters)))))
     (begin
       (format-log "FATAL: Cannot open ~a" CHAPTERS_JSON)
       (printf "FATAL: Cannot open ~a" CHAPTERS_JSON)
       (kill-thread logging-thread)
       (exit 1)))
 
-;; Write response to file
+
+;; Write JSON to files
+;; ====================
 (define (write-chapter-response response)
   (let* ([id (car response)]
          [resp (cadr response)]
@@ -52,7 +61,6 @@
           (λ () (printf (jsexpr->string resp))))
         (channel-put result-channel (format "WROTE: ~a" path))))))
 
-;; File channel
 ;; Payload should be in the format (id jsexpr?) or an error
 (define (write-response resp)
   (case (car resp)
@@ -60,15 +68,18 @@
      (channel-put result-channel (format "ERROR: ~a" (cdr resp)))]
     [else (write-chapter-response resp)]))
 
+;; Keep tabs on how many 'DONE messages come in and terminate when they all
+;; phone home
 (define (maintain-done-state done)
   (let* ([s (unbox state)]
          [l (unbox thread-count)]
          [n (cons done s)])
     (if (equal? (length n) l)
         (begin
-          (sleep 2) ;; allow time to flush the log
+          (sleep 2) ; allow time to flush the log
           (kill-thread logging-thread))
         (set-box! state n))))
+
 
 ;; Result channel - writes to log file
 (define result-channel (make-channel))
@@ -82,13 +93,18 @@
              (format-log "~a" r)))
        (loop)))))
 
+;; Read adapter key from chapter payload
 (define (get-adapter payload)
   (if (equal? (car payload) 'DONE)
       'DONE
       (get-in '(dataService adapter) (cdr payload))))
 
-;; Work channel has a buffer size of 10
-(define work-channel (make-async-channel 9))
+
+;; Worker Threads
+;; ==============
+
+;; Work channel has a buffer size of thread count
+(define work-channel (make-async-channel (unbox thread-count)))
 
 ;; Returns a thread bound to id which calls a function based on adapter
 ;; from the WORKERS hash. If a worker function is registered, its output is
