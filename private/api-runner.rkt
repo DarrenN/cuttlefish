@@ -6,12 +6,19 @@
          "logger.rkt"
          "workers/meetup.rkt")
 
+;; Worker Functions
+;; Define worker functions by their adapter key from the chapter.json files
+(define WORKERS
+  (hash "meetup" worker-meetup))
+
 ;; TODO: paths should be set by args or ENV vars
 (define CHAPTERS_JSON (build-path (current-directory) "data" "chapters.json"))
 (define CHAPTERS_OUTPUT (build-path "/tmp"))
 
 ;; Mutable state
 (define chapters (box '()))
+(define thread-count (box 0))
+(define state (box '()))
 
 ;; logging
 ;; TODO: path should be set by ARGS or ENV vars
@@ -20,8 +27,11 @@
 
 ;; If we can't open the chapters file then crash out
 (if (file-exists? CHAPTERS_JSON)
-    (set-box! chapters
-              (call-with-input-file CHAPTERS_JSON (λ (in) (read-json in))))
+    (begin
+      (set-box! chapters
+                (call-with-input-file CHAPTERS_JSON (λ (in) (read-json in))))
+      (set-box! thread-count
+                (min 10 (length (hash-keys (unbox chapters))))))
     (begin
       (format-log "FATAL: Cannot open ~a" CHAPTERS_JSON)
       (printf "FATAL: Cannot open ~a" CHAPTERS_JSON)
@@ -42,6 +52,24 @@
           (λ () (printf (jsexpr->string resp))))
         (channel-put result-channel (format "WROTE: ~a" path))))))
 
+;; File channel
+;; Payload should be in the format (id jsexpr?) or an error
+(define (write-response resp)
+  (case (car resp)
+    ['ERROR
+     (channel-put result-channel (format "ERROR: ~a" (cdr resp)))]
+    [else (write-chapter-response resp)]))
+
+(define (maintain-done-state done)
+  (let* ([s (unbox state)]
+         [l (unbox thread-count)]
+         [n (cons done s)])
+    (if (equal? (length n) l)
+        (begin
+          (sleep 2) ;; allow time to flush the log
+          (kill-thread logging-thread))
+        (set-box! state n))))
+
 ;; Result channel - writes to log file
 (define result-channel (make-channel))
 (define result-thread
@@ -49,22 +77,10 @@
    (λ ()
      (let loop ()
        (let ([r (channel-get result-channel)])
-         (format-log "~a" r))
+         (if (equal? r 'DONE)
+             (maintain-done-state r)
+             (format-log "~a" r)))
        (loop)))))
-
-;; File channel
-;; Payload should be in the format (id jsexpr?) or an error
-(define file-channel (make-channel))
-(define file-thread
-        (thread
-         (λ ()
-           (let loop ()
-             (let ([r (channel-get file-channel)])
-               (case (car r)
-                 ['ERROR
-                  (channel-put result-channel (format "ERROR: ~a" (cdr r)))]
-                 [else (write-chapter-response r)]))
-             (loop)))))
 
 (define (get-adapter payload)
   (if (equal? (car payload) 'DONE)
@@ -72,25 +88,31 @@
       (get-in '(dataService adapter) (cdr payload))))
 
 ;; Work channel has a buffer size of 10
-(define work-channel (make-async-channel 10))
+(define work-channel (make-async-channel 9))
 
 ;; Returns a thread bound to id which calls a function based on adapter
+;; from the WORKERS hash. If a worker function is registered, its output is
+;; tossed onto the file-channel. Errors are logged immediately.
 (define (dispatch-worker thread-id)
   (thread
    (λ ()
      (let loop ()
        (define item (async-channel-get work-channel))
-       (case (get-adapter item)
-         ['DONE
-          (channel-put result-channel
-                       (format "DONE: thread ~a" thread-id))]
-         [("meetup")
-          (channel-put file-channel (worker-ant format-log thread-id item))
+       (define adapter (get-adapter item))
+       (cond
+         [(equal? adapter 'DONE)
+          (channel-put result-channel 'DONE)]
+         [(hash-has-key? WORKERS adapter)
+          (write-response ((hash-ref WORKERS "meetup") format-log thread-id item))
           (loop)]
-         [else (loop)])))))
+         [else
+          (channel-put
+           result-channel
+           (format "ERROR: Adapter ~a not registered! [~a]" adapter (car item)))
+          (loop)])))))
 
-;; Spin up 3 threads and load with data
-(define work-threads (map dispatch-worker '(1 2 3)))
+;; Spin up worker threads
+(define work-threads (map dispatch-worker (range (unbox thread-count))))
 
 ;; Build a list of chapter payloads with corresponding # of DONE symbols for
 ;; passing to threads
@@ -100,11 +122,11 @@
          [dones (make-list (length pairs) '(DONE))])
     (append pairs dones)))
 
-;;(displayln chapter-payloads)
-
 ;; Load payloads into the channels
 (for ([item chapter-payloads])
   (async-channel-put work-channel item))
 
-;; Create a thread for wach dispatch-thread function
+;; We have to explicitly drop a wait on each thread or it will immediately
+;; close before it takes work off the channels (synchronization)
 (for-each thread-wait work-threads)
+(thread-wait logging-thread)

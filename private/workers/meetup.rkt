@@ -3,7 +3,7 @@
 (require simple-http
          (except-in "../hash.rkt" get))
 
-(provide worker-ant)
+(provide worker-meetup)
 
 (define throttle (box 0))
 
@@ -22,7 +22,7 @@
 (define httpbin
   (update-ssl (update-host json-requester "httpbin.org") #t))
 
-(define (worker-ant logger id payload)
+(define (worker-meetup logger id payload)
   ;(handle-throttle logger)
   (define id (car payload))
   (define api-id (get-in '(dataService id) (cdr payload)))

@@ -26,5 +26,12 @@
       "adapter": "meetup",
       "id": "Papers-We-Love-pdx"
     }
+  },
+  "boston": {
+    "title": "Boston",
+    "dataService": {
+      "adapter": "meetup",
+      "id": "Papers-We-Love-Boston"
+    }
   }
 }

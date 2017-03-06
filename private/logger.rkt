@@ -7,7 +7,7 @@
 
 ;; logging
 
-(define chlogger (make-logger 'channels))
+(define chlogger (make-logger 'cuttlefish))
 (define rc (make-log-receiver chlogger 'info))
 
 (define logger_thread #f)
