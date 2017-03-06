@@ -55,10 +55,10 @@
     (with-handlers ([exn:fail?
                      (λ (exn) (channel-put
                                result-channel
-                               (format "ERROR: Could not write to ~a" path)))])
+                               (format "ERROR: Could not write to ~a : ~a" path (exn-message exn))))])
       (begin
-        (with-output-to-file path #:mode 'binary #:exists 'replace
-          (λ () (printf (jsexpr->string resp))))
+        (with-output-to-file path #:mode 'text #:exists 'replace
+          (λ () (display (jsexpr->string resp))))
         (channel-put result-channel (format "WROTE: ~a" path))))))
 
 ;; Payload should be in the format (id jsexpr?) or an error

@@ -1,35 +1,51 @@
 #lang racket
 
 (require simple-http
+         json
          (except-in "../hash.rkt" get))
 
 (provide worker-meetup)
 
-(define throttle (box 0))
+(define remaining (box 0))
+(define reset (box 0))
 
-(define (make-throttle)
-  (if (equal? (random 1 4) 3)
-    (set-box! throttle (random 1 5))
-    (set-box! throttle 0)))
+(define (apply-throttle logger)
+  (let ([remain (unbox remaining)]
+        [reset (unbox reset)])
+    (when (< remain 2)
+      (logger "~a" (format "Throttled meetup for ~a seconds" reset))
+      (sleep reset))))
 
-(define (handle-throttle logger)
-  (let ([t (unbox throttle)])
-    (when (> t 0)
-      (logger "~a" (format "throttled ant for ~a seconds" t))
-      (sleep t)))
-  (make-throttle))
+(define (update-throttle headers)
+  (let ([remain (car (get-in '(X-Ratelimit-Remaining) headers))]
+        [res (car (get-in '(X-Ratelimit-Reset) headers))])
+    (set-box! remaining remain)
+    (set-box! reset res)))
 
 (define httpbin
-  (update-ssl (update-host json-requester "httpbin.org") #t))
+  (update-ssl (update-host json-requester "api.meetup.com") #t))
+
+;; https://api.meetup.com/papers-we-love/events?&sign=true&photo-host=public&scroll=future_or_past&fields=photo_album&desc=true
+
+(define params
+  '((sign . "false")
+    (photo-host . "public")
+    (scroll . "future_or_past")
+    (fields . "photo_album")
+    (desc . "true")))
 
 (define (worker-meetup logger id payload)
-  ;(handle-throttle logger)
+  (apply-throttle logger)
   (define id (car payload))
   (define api-id (get-in '(dataService id) (cdr payload)))
   (define title (get-in '(title) (cdr payload)))
 
   (define response
-    (get httpbin "/get" #:params `((id . ,api-id) (title . ,title))))
+    (get httpbin (format "/~a/events" api-id) #:params params))
+
+  (update-throttle (json-response-headers response))
+
+  (printf "remain: ~a | reset: ~a\n" (unbox remaining) (unbox reset))
 
   ;; Workers should respond with either:
   ;;
