@@ -13,7 +13,7 @@
   (let ([remain (unbox remaining)]
         [reset (unbox reset)])
     (when (< remain 2)
-      (logger "~a" (format "Throttled meetup for ~a seconds" reset))
+      (logger "~a" (format "Throttled meetup for ~a from ~a seconds" reset remain))
       (sleep reset))))
 
 (define (update-throttle headers)
@@ -25,14 +25,11 @@
 (define httpbin
   (update-ssl (update-host json-requester "api.meetup.com") #t))
 
-;; https://api.meetup.com/papers-we-love/events?&sign=true&photo-host=public&scroll=future_or_past&fields=photo_album&desc=true
-
 (define params
-  '((sign . "false")
-    (photo-host . "public")
-    (scroll . "future_or_past")
+  '((photo-host . "public")
     (fields . "photo_album")
-    (desc . "true")))
+    (sign . "true")
+    (status . "upcoming,past")))
 
 (define (worker-meetup logger id payload)
   (apply-throttle logger)

@@ -17,14 +17,14 @@
     "title": "London",
     "dataService": {
       "adapter": "meetup",
-      "id": "papers-we-love-london"
+      "id": "Papers-We-Love-London"
     }
   },
   "portland": {
     "title": "Portland",
     "dataService": {
       "adapter": "meetup",
-      "id": "Papers-We-Love-pdx"
+      "id": "Papers-We-Love-PDX"
     }
   },
   "boston": {
