@@ -3,6 +3,7 @@
          gregor
          json
          (except-in "hash.rkt" get)
+         "chunk-list.rkt"
          "logger.rkt"
          "workers/meetup.rkt")
 
@@ -18,9 +19,11 @@
 (define CHAPTERS_JSON (build-path (current-directory) "data" "chapters.json"))
 (define CHAPTERS_OUTPUT (build-path "/tmp"))
 
+;; How many threads/channels to spin up to do work
+(define thread-count 3)
+
 ;; Mutable state
 (define chapters (box '()))
-(define thread-count (box 0))
 (define state (box '()))
 
 
@@ -34,11 +37,8 @@
 ;; =========
 ;; If we can't open the chapters file then crash out
 (if (file-exists? CHAPTERS_JSON)
-    (begin
-      (set-box! chapters
-                (call-with-input-file CHAPTERS_JSON (λ (in) (read-json in))))
-      (set-box! thread-count
-                (length (hash-keys (unbox chapters)))))
+    (set-box! chapters
+              (call-with-input-file CHAPTERS_JSON (λ (in) (read-json in))))
     (begin
       (format-log "FATAL: Cannot open ~a" CHAPTERS_JSON)
       (printf "FATAL: Cannot open ~a" CHAPTERS_JSON)
@@ -72,14 +72,13 @@
 ;; phone home
 (define (maintain-done-state done)
   (let* ([s (unbox state)]
-         [l (unbox thread-count)]
+         [l thread-count]
          [n (cons done s)])
     (if (equal? (length n) l)
         (begin
           (sleep 2) ; allow time to flush the log
           (kill-thread logging-thread))
         (set-box! state n))))
-
 
 ;; Result channel - writes to log file
 (define result-channel (make-channel))
@@ -95,7 +94,7 @@
 
 ;; Read adapter key from chapter payload
 (define (get-adapter payload)
-  (if (equal? (car payload) 'DONE)
+  (if (equal? payload 'DONE)
       'DONE
       (get-in '(dataService adapter) (cdr payload))))
 
@@ -103,17 +102,28 @@
 ;; Worker Threads
 ;; ==============
 
-;; Work channel has a buffer size of thread count
-(define work-channel (make-async-channel (unbox thread-count)))
+#|
+
+General outline:
+----------------
+
+1) Create a list of n work-channels
+2) Create a worker-threads for each channel
+3) Partition list of chapters into (length work-channels) lists
+4) append 'DONE to the end of each chapters list
+5) For each chapters list push chapter into a channel
+6) Each thread should terminate on 'DONE
+
+|#
 
 ;; Returns a thread bound to id which calls a function based on adapter
 ;; from the WORKERS hash. If a worker function is registered, its output is
 ;; tossed onto the file-channel. Errors are logged immediately.
-(define (dispatch-worker thread-id)
+(define (dispatch-worker thread-id chan)
   (thread
    (λ ()
      (let loop ()
-       (define item (async-channel-get work-channel))
+       (define item (async-channel-get chan))
        (define adapter (get-adapter item))
        (cond
          [(equal? adapter 'DONE)
@@ -127,20 +137,32 @@
            (format "ERROR: Adapter ~a not registered! [~a]" adapter (car item)))
           (loop)])))))
 
-;; Spin up worker threads
-(define work-threads (map dispatch-worker (range (unbox thread-count))))
-
 ;; Build a list of chapter payloads with corresponding # of DONE symbols for
 ;; passing to threads
 (define chapter-payloads
   (let* ([chapters (unbox chapters)]
          [pairs (hash->list chapters)]
-         [dones (make-list (length pairs) '(DONE))])
-    (append pairs dones)))
+         [chunks (chunk-list pairs thread-count)])
+    (map (λ (x) (append x '(DONE))) chunks)))
+
+;; Create a list of async worker channels equal to thread-count
+;; Worker channel has a buffer size equal to # of items in chapters chunk
+(define work-channels
+  (for/list ([i (range thread-count)]
+             [chapters chapter-payloads])
+    (make-async-channel (length chapters))))
+
+;; Spin up a worker thread on each channel
+(define work-threads
+  (for/list ([ch work-channels]
+             [id (range (length work-channels))])
+    (dispatch-worker id ch)))
 
 ;; Load payloads into the channels
-(for ([item chapter-payloads])
-  (async-channel-put work-channel item))
+(for ([chan work-channels]
+      [chapters chapter-payloads])
+  (for ([chapter chapters])
+    (async-channel-put chan chapter)))
 
 ;; We have to explicitly drop a wait on each thread or it will immediately
 ;; close before it takes work off the channels (synchronization)

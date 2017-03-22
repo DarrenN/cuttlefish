@@ -6,20 +6,20 @@
 
 (provide worker-meetup)
 
-(define remaining (box 0))
+(define remaining (box #f)) ;; start as false to prevent false throttle
 (define reset (box 0))
 
 (define (apply-throttle logger)
   (let ([remain (unbox remaining)]
         [reset (unbox reset)])
-    (when (< remain 2)
+    (when (and (not (false? remain)) (< remain 2))
       (logger "~a" (format "Throttled meetup for ~a from ~a seconds" reset remain))
       (sleep reset))))
 
 (define (update-throttle headers)
   (let ([remain (car (get-in '(X-Ratelimit-Remaining) headers))]
         [res (car (get-in '(X-Ratelimit-Reset) headers))])
-    (set-box! remaining remain)
+    (set-box! remaining (string->number remain))
     (set-box! reset res)))
 
 (define httpbin
