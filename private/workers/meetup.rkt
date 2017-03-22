@@ -42,6 +42,9 @@
 
   (update-throttle (json-response-headers response))
 
+  ;; TODO: convert response into correct JSON schema
+
+  ;; TODO: remove this
   (printf "remain: ~a | reset: ~a\n" (unbox remaining) (unbox reset))
 
   ;; Workers should respond with either:
