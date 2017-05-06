@@ -25,31 +25,40 @@
 
 ;; Code here
 
-(module+ test
-  ;; Tests to be run with raco test
-  )
-
 (module+ main
-  (require racket/file
+  (require racket/cmdline
+           racket/file
            racket/string
            "private/api-runner.rkt")
-  
-  (define CONFIG-PATH (build-path (current-directory) ".cuttlefishrc"))
 
+  (define default-configfile-path
+    (build-path (current-directory) ".cuttlefishrc"))
+
+  ;; If no cmdline path then use default path
+  (define config-path
+    (let* ([args (current-command-line-arguments)]
+           [arg0 (if (zero? (vector-length args))
+                     #f
+                     (vector-ref args 0))])
+      (if (path-string? arg0)
+          (path->complete-path arg0)
+          default-configfile-path)))
+  
   (define default-config
     (hash "json-out-path" "/tmp"
           "chapter-json-file" (build-path (current-directory) "chapters.json")))
 
   (define config (make-parameter default-config))  
-  
+
+  ;; Read config file and parse into hash
   (define (read-config path)
     (apply hash
            (map string-trim
                 (regexp-match* #px"[~/\\w.-]+"
                  (string-normalize-spaces
-                  (file->string CONFIG-PATH #:mode 'text))))))
+                  (file->string path #:mode 'text))))))
   
-  (if (file-exists? CONFIG-PATH)
-    (parameterize ([config (read-config CONFIG-PATH)])
+  (if (and (path? config-path) (file-exists? config-path))
+    (parameterize ([config (read-config config-path)])
       (run-workers (config)))
     (run-workers (config))))
