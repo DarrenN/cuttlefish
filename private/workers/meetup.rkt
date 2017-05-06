@@ -60,7 +60,7 @@
 ;; ('ERROR "error message in id") <- try to include id in message
 ;; (id jsexpr?)
 
-(define (worker-meetup logger id payload)
+(define (worker-meetup logger id config payload)
   (apply-throttle logger)
   (define id (car payload))
   (define api-id (get-in '(dataService id) (cdr payload)))
