@@ -46,7 +46,8 @@
   
   (define default-config
     (hash "json-out-path" "/tmp"
-          "chapter-json-file" (build-path (current-directory) "chapters.json")))
+          "chapter-json-file" (build-path (current-directory) "chapters.json")
+          "logfile-path" (build-path (current-directory) "logs")))
 
   (define config (make-parameter default-config))  
 

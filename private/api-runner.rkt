@@ -17,22 +17,18 @@
 (define WORKERS
   (hash "meetup" worker-meetup))
 
-;; TODO: paths should be set by args or ENV vars
-(define CHAPTERS_JSON (build-path (current-directory) "data" "chapters.json"))
-(define CHAPTERS_OUTPUT (build-path "/tmp"))
-
 ;; How many threads/channels to spin up to do work
 (define THREAD-COUNT 3)
 
 ;; Mutable state
-(define chapters (box '()))
 (define state (box '()))
+(define logging-thread '())
 
 ;; Logging
 ;; =======
-;; TODO: path should be set by ARGS or ENV vars
-(define logging-thread
-  (launch-log-daemon (build-path "/tmp") "racket-test-logger"))
+(define (create-logging-thread path)
+  (set! logging-thread
+        (launch-log-daemon (path->complete-path path) "cuttlefish")))
 
 ;; Write JSON to files
 ;; ====================
@@ -68,6 +64,10 @@
          [n (cons done s)])
     (if (equal? (length n) l)
         (begin
+          (format-log
+           "~a"
+           (format "DONE: ~a of ~a threads completed" (length n) l))
+          (format-log "~a" "=====")
           (sleep 2) ; allow time to flush the log
           (kill-thread logging-thread))
         (set-box! state n))))
@@ -166,7 +166,9 @@ General outline:
 ;; ============
 ;; Run workers
 ;; ============
+
 (define (run-workers config)
+  (create-logging-thread (hash-ref config "logfile-path"))
   (define CHAPTERS-JSON (build-path (hash-ref config "chapter-json-file")))
 
   ;; Builds list of channels and load with worker threads
@@ -180,6 +182,10 @@ General outline:
         [chapters chapter-payloads])
     (for ([chapter chapters])
       (async-channel-put chan (list config chapter))))
+
+  (format-log "~a" "=====")
+  (format-log "~a" (format "START: spinning up ~a threads"
+                           THREAD-COUNT))
   
   ;; We have to explicitly drop a wait on each thread or it will immediately
   ;; close before it takes work off the channels (synchronization)
