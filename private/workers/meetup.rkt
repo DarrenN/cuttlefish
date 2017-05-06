@@ -12,9 +12,9 @@
 (define (apply-throttle logger)
   (let ([remain (unbox remaining)]
         [reset (unbox reset)])
-    (when (and (not (false? remain)) (< remain 2))
-      (logger "~a" (format "Throttled meetup for ~a from ~a seconds" reset remain))
-      (sleep reset))))
+    (when (and (not (false? remain)) (< remain 3))
+      (logger "~a" (format "THROTTLED: meetup worker for ~a seconds (~a reqs remain)" reset remain))
+      (sleep (string->number reset)))))
 
 (define (update-throttle headers)
   (let ([remain (car (get-in '(X-Ratelimit-Remaining) headers))]
@@ -66,23 +66,27 @@
   (define api-id (get-in '(dataService id) (cdr payload)))
   (define title (get-in '(title) (cdr payload)))
 
-  (define response
-    (get httpbin (format "/~a/events" api-id) #:params params))
+  ;; Wrap API call with exception handlers that pass errors back up to the
+  ;; worker for logging
+  (with-handlers
+      ([exn:fail:network:http:error?
+        (λ (e)
+          (list 'ERROR (format "Couldn't fetch ~a: ~a"
+                               id (exn:fail:network:http:error-code e))))]
+       [exn:fail:network:http:read?
+        (λ (e)
+          (list 'ERROR (format "Could not read data for ~a" id)))])
 
-  (update-throttle (json-response-headers response))
+    (define response
+      (get httpbin (format "/~a/events" api-id) #:params params))
 
-  ;; TODO: remove this
-  (printf "remain: ~a | reset: ~a\n" (unbox remaining) (unbox reset))
+    (update-throttle (json-response-headers response))
 
-  ;; Generate correct response, error or jsexpr?
-  (cond
-    [(exn:fail:network:http:read? response)
-     (list 'ERROR (format "Could not read data for ~a" id))]
-    [(http-error? response)
-     (list 'ERROR (format "~a ~a" id (get-status response)))]
-    [(http-success? response)
-     (let ([json (list id (convert-json (json-response-body response)))])
-       (if (jsexpr? json)
-           json
-           (list 'ERROR (format "Couldn nor format ~a into correct JSON" id))))]
-    [else `(ERROR ,id)]))
+    ;; TODO: remove this
+    ;(printf "remain: ~a | reset: ~a\n" (unbox remaining) (unbox reset))
+
+    ;; Return the converted JSON or an error
+    (let ([json (convert-json (json-response-body response))])
+         (if (jsexpr? json)
+             (list id json) ;; we need the id for the filename
+             (list 'ERROR (format "Couldn't format ~a into correct JSON" id))))))

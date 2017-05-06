@@ -55,7 +55,8 @@
     (with-handlers ([exn:fail?
                      (λ (exn) (channel-put
                                result-channel
-                               (format "ERROR: Could not write to ~a : ~a" path (exn-message exn))))])
+                               (format "ERROR: Could not write to ~a : ~a"
+                                       path (exn-message exn))))])
       (begin
         (with-output-to-file path #:mode 'text #:exists 'replace
           (λ () (display (jsexpr->string resp))))
@@ -129,7 +130,8 @@ General outline:
          [(equal? adapter 'DONE)
           (channel-put result-channel 'DONE)]
          [(hash-has-key? WORKERS adapter)
-          (write-response ((hash-ref WORKERS "meetup") format-log thread-id item))
+          (write-response ((hash-ref WORKERS "meetup")
+                           format-log thread-id item))
           (loop)]
          [else
           (channel-put

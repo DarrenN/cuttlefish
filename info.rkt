@@ -4,6 +4,7 @@
                "gregor"
                "quickcheck"
                "rackunit-lib"
+               "yaml"
                "https://github.com/DarrenN/simple-http.git"))
 (define build-deps '("scribble-lib" "racket-doc"))
 (define scribblings '(("scribblings/cuttlefish.scrbl" ())))
