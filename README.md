@@ -36,14 +36,23 @@ Errors should be `(ERROR "reason for failure containing id for logging")`
 Success should be a [jsexpr](http://docs.racket-lang.org/json/index.html?q=jsexpr#%28tech._jsexpr%29)
 matching the specificed format for chapter events: `(id jsexpr)`
 
+### Config file
+
+1. Copy `cuttlefishrc.template` to `.cuttlefishrc`
+1. Update the values inside to point to correct directories, provide API keys, etc.
 
 ### Run it
 
 Currently in hackety-hack mode, so:
 
 ```
-$ cd private
-$ racket api-runner.rkt
+$ racket main.rkt
+```
+
+To run with a different config:
+
+```
+$ racket main.rkt path/to/config/file
 ```
 
 Head over to `/tmp` (in your root) and you'll see some json files like
