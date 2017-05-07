@@ -124,7 +124,7 @@ General outline:
           (channel-put result-channel 'DONE)]
          [(hash-has-key? WORKERS adapter)
           (write-response (list config
-                                ((hash-ref WORKERS "meetup")
+                                ((hash-ref WORKERS adapter)
                                  format-log thread-id config item)))
           (loop)]
          [else
