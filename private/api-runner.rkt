@@ -138,7 +138,7 @@ General outline:
 (define (prepare-chapter-payloads chapters)
   (let* ([pairs (hash->list chapters)]
          [chunks (chunk-list pairs THREAD-COUNT)])
-      (map (λ (x) (append x '(DONE))) chunks)))
+    (map (λ (x) (append x '(DONE))) chunks)))
 
 ;; Create a list of async worker channels equal to THREAD-COUNT
 ;; Worker channel has a buffer size equal to # of items in chapters chunk
@@ -174,6 +174,7 @@ General outline:
   ;; Builds list of channels and load with worker threads
   (define chapter-payloads
     (prepare-chapter-payloads (read-chapter-json CHAPTERS-JSON)))
+  
   (define work-channels (prepare-work-channels chapter-payloads))
   (define work-threads (prepare-work-threads work-channels))
   
