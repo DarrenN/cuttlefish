@@ -23,7 +23,7 @@
          [iso-offset
           (format "~a:~a" (substring offset 0 2) (substring offset 2 4))]
          [new-iso-str (string-replace str offset iso-offset)])
-    (list (->posix (iso8601->datetime new-iso-str))
+    (list (* (->posix (iso8601->datetime new-iso-str)) 1000)
           (* (string->number (substring iso-offset 0 2)) 60 60 1000))))
 
 ;; Mash returned JSON into correct JSEXPR shape
