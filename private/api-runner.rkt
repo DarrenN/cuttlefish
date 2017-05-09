@@ -5,7 +5,8 @@
          (except-in "hash.rkt" get)
          "chunk-list.rkt"
          "logger.rkt"
-         "workers/meetup.rkt")
+         "workers/meetup.rkt"
+         "workers/facebook.rkt")
 
 (provide run-workers)
 
@@ -15,7 +16,8 @@
 ;; Define worker functions by their adapter key from the chapter.json files
 
 (define WORKERS
-  (hash "meetup" worker-meetup))
+  (hash "meetup" worker-meetup
+        "facebook" worker-facebook))
 
 ;; How many threads/channels to spin up to do work
 (define THREAD-COUNT 3)
@@ -35,7 +37,7 @@
 (define (write-chapter-response config response)
   (let* ([id (car response)]
          [resp (cadr response)]
-         [path (build-path (hash-ref config "json-out-path")
+         [path (build-path (hash-ref config 'json-out-path)
                            (format "~a.json" id))])
     (with-handlers ([exn:fail?
                      (λ (exn) (channel-put
@@ -168,8 +170,8 @@ General outline:
 ;; ============
 
 (define (run-workers config)
-  (create-logging-thread (hash-ref config "logfile-path"))
-  (define CHAPTERS-JSON (build-path (hash-ref config "chapter-json-file")))
+  (create-logging-thread (hash-ref config 'logfile-path))
+  (define CHAPTERS-JSON (build-path (hash-ref config 'chapter-json-file)))
 
   ;; Builds list of channels and load with worker threads
   (define chapter-payloads
