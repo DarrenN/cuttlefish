@@ -29,6 +29,7 @@
   (require racket/cmdline
            racket/file
            racket/string
+           json
            "private/api-runner.rkt")
 
   (define default-configfile-path
@@ -53,13 +54,9 @@
 
   ;; Read config file and parse into hash
   (define (read-config path)
-    (apply hash
-           (map string-trim
-                (regexp-match* #px"[~/\\w.-]+"
-                 (string-normalize-spaces
-                  (file->string path #:mode 'text))))))
+    (if (and (path? path) (file-exists? path))
+        (call-with-input-file path (λ (in) (read-json in)))
+        (config)))
   
-  (if (and (path? config-path) (file-exists? config-path))
-    (parameterize ([config (read-config config-path)])
-      (run-workers (config)))
+  (parameterize ([config (read-config config-path)])
     (run-workers (config))))

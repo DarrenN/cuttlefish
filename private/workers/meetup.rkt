@@ -22,7 +22,7 @@
     (set-box! remaining (string->number remain))
     (set-box! reset res)))
 
-(define httpbin
+(define api-meetup-com
   (update-ssl (update-host json-requester "api.meetup.com") #t))
 
 (define params
@@ -78,7 +78,7 @@
           (list 'ERROR (format "Could not read data for ~a" id)))])
 
     (define response
-      (get httpbin (format "/~a/events" api-id) #:params params))
+      (get api-meetup-com (format "/~a/events" api-id) #:params params))
 
     (update-throttle (json-response-headers response))
 
