@@ -15,6 +15,9 @@
 (define graph-facebook-com
   (update-ssl (update-host json-requester "graph.facebook.com") #t))
 
+;; Convert FB's ISO8601 offset into a format Gregor can deal with, also
+;; return utcOffset in milliseconds
+;; `(Int Int)
 (define (get-epoch str)
   (let* ([offset (substring str (- (string-length str) 4) (string-length str))]
          [iso-offset
@@ -57,7 +60,7 @@
         [title (get-in '(title) (cdr payload))])
     
     (define params
-      `((since . "135701640")
+      `((since . "132001640")
         (access_token . ,(hash-ref config 'facebook-access-token))))
 
     ;; Wrap request in handlers to deal with errors gracefully
