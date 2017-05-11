@@ -3,6 +3,7 @@
 (require simple-http
          gregor
          json
+         markdown
          racket/string
          (except-in "../hash.rkt" get))
 
@@ -26,6 +27,10 @@
     (list (* (->posix (iso8601->datetime new-iso-str)) 1000)
           (* (string->number (substring iso-offset 0 2)) 60 60 1000))))
 
+(define (handle-description str)
+  (let ([md (parse-markdown str)])
+    (xexpr->string `(div ((class "event-api-content")) ,@md))))
+
 ;; Mash returned JSON into correct JSEXPR shape
 (define (convert-json json)
   (let ([data (hash-ref json 'data)])
@@ -37,7 +42,7 @@
                  'time (car epoch)
                  'utcOffset (last epoch)
                  'title (get-in '(name) event)
-                 'description (get-in '(description) event)
+                 'description (handle-description (get-in '(description) event))
                  'venue (hasheq
                          'name (get-in '(place name) event 'null)
                          'address1 (get-in '(place location street) event)
