@@ -1,8 +1,6 @@
 cuttlefish
 ==========
 
-![Mr. Cuddlesworth](http://pre14.deviantart.net/049e/th/pre/f/2013/365/f/a/cuttlefish_by_naeomi-d709r4p.png)
-
 ### To install
 
 ```
@@ -66,7 +64,3 @@ cuttlefish: 2017-03-22T18:52:19.53948291 WROTE: /tmp/london.json
 cuttlefish: 2017-03-22T18:52:19.575353027 WROTE: /tmp/sanfrancisco.json
 cuttlefish: 2017-03-22T18:52:20.340291016 WROTE: /tmp/newyork.json
 ```
-
----
-
-Image from [Naeomi](http://naeomi.deviantart.com/art/Prize-Mr-Cuddlesworth-423718297)
