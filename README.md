@@ -1,7 +1,7 @@
 cuttlefish
 ==========
 
-![cuttlefish](http://pwlconf.org/images/cuttlefish-48188_1280.png)
+<img src="http://pwlconf.org/images/cuttlefish-48188_1280.png" height="300px" alt="Cuttlefish" />
 
 Gathers data for Papers We Love meetups from different services. Currently pulls from Meetup.com and Facebook.
 
@@ -30,8 +30,8 @@ throttling, etc) and must adhere to the following contract:
 
   ; ... code ....
 
-  (cond [fail (list 'ERROR string?)]
-        [success (list id jsexpr?)]))
+  (cond (fail (list 'ERROR string?))
+        (success (list id jsexpr?))))
 ```
 
 Errors should be `(ERROR "reason for failure containing id for logging")`
@@ -69,3 +69,9 @@ cuttlefish: 2017-03-22T18:52:19.53948291 WROTE: /tmp/london.json
 cuttlefish: 2017-03-22T18:52:19.575353027 WROTE: /tmp/sanfrancisco.json
 cuttlefish: 2017-03-22T18:52:20.340291016 WROTE: /tmp/newyork.json
 ```
+
+---
+
+<a href="http://racket-lang.org/"><img src="http://racket-lang.org/img/racket-logo.svg" width="80" height="80" /></a>&nbsp;
+<a href="http://paperswelove.org/"><img src="http://paperswelove.org/images/logo-top.svg" /></a>
+
