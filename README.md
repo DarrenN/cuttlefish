@@ -1,10 +1,15 @@
 cuttlefish
 ==========
 
+![cuttlefish](http://pwlconf.org/images/cuttlefish-48188_1280.png)
+
+Gathers data for Papers We Love meetups from different services. Currently pulls from Meetup.com and Facebook.
+
 ### To install
 
 ```
 $ brew cask install racket
+$ cd cuttlefish
 $ raco pkg install
 ```
 
@@ -15,7 +20,7 @@ up workers to fetch API data for each chapter based on the `adapter` field
 within each entry.
 
 `/private/workers` has modules corresponding to each service we want to hit.
-Currently there is only `meetup.rkt`.
+We currently have adapters for Meetup.com (`meetup.rkt`) and Facebook (`facebook.rkt`).
 
 Worker functions are responsible for everything about their service (endpoints,
 throttling, etc) and must adhere to the following contract:
