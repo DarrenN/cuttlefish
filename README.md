@@ -1,4 +1,4 @@
-cuttlefish
+cuttlefish [![Build Status](https://travis-ci.org/DarrenN/cuttlefish.svg?branch=master)](https://travis-ci.org/DarrenN/cuttlefish)
 ==========
 
 <img src="http://pwlconf.org/images/cuttlefish-48188_1280.png" height="300px" alt="Cuttlefish" />
