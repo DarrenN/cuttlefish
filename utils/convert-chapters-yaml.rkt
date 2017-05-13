@@ -33,5 +33,6 @@ JSON format
                     'dataService (hasheq 'adapter "meetup"
                                          'id (hash-ref v "meetup_url"))))))
 
-(with-output-to-file CHAPTERS-JSON-PATH #:mode 'text #:exists 'replace
-  (λ () (display (jsexpr->string CHAPTER-JSON))))
+(define (convert)
+  (with-output-to-file CHAPTERS-JSON-PATH #:mode 'text #:exists 'replace
+    (λ () (display (jsexpr->string CHAPTER-JSON)))))
