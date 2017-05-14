@@ -2,7 +2,6 @@
 
 (module+ test
   (require rackunit))
-
 ;; Notice
 ;; To install (from within the package directory):
 ;;   $ raco pkg install
@@ -26,10 +25,38 @@
 
 ;; Code here
 
-(module+ test
-  ;; Tests to be run with raco test
-  )
-
 (module+ main
-  ;; Main entry point, executed when run with the `racket` executable or DrRacket.
-  )
+  (require racket/cmdline
+           racket/file
+           racket/string
+           json
+           "private/api-runner.rkt")
+
+  (define default-configfile-path
+    (build-path (current-directory) ".cuttlefishrc"))
+
+  ;; If no cmdline path then use default path
+  (define config-path
+    (let* ([args (current-command-line-arguments)]
+           [arg0 (if (zero? (vector-length args))
+                     #f
+                     (vector-ref args 0))])
+      (if (path-string? arg0)
+          (path->complete-path arg0)
+          default-configfile-path)))
+  
+  (define default-config
+    (hash "json-out-path" "/tmp"
+          "chapter-json-file" (build-path (current-directory) "chapters.json")
+          "logfile-path" (build-path (current-directory) "logs")))
+
+  (define config (make-parameter default-config))  
+
+  ;; Read config file and parse into hash
+  (define (read-config path)
+    (if (and (path? path) (file-exists? path))
+        (call-with-input-file path (λ (in) (read-json in)))
+        (config)))
+  
+  (parameterize ([config (read-config config-path)])
+    (run-workers (config))))
