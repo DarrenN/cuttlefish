@@ -4,9 +4,9 @@
                "gregor"
                "quickcheck"
                "rackunit-lib"
-               "https://github.com/DarrenN/simple-http.git"))
+               "simple-http"))
 (define build-deps '("scribble-lib" "racket-doc"))
 (define scribblings '(("scribblings/cuttlefish.scrbl" ())))
 (define pkg-desc "Orchestrate data gathering for Paperswelove.org")
-(define version "0.1")
+(define version "0.1.0")
 (define pkg-authors '(Darren_N))
