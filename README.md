@@ -1,7 +1,7 @@
 cuttlefish [![Build Status](https://travis-ci.org/DarrenN/cuttlefish.svg?branch=master)](https://travis-ci.org/DarrenN/cuttlefish)
 ==========
 
-<img src="http://pwlconf.org/images/cuttlefish-48188_1280.png" height="300px" alt="Cuttlefish" />
+<img src="https://github.com/DarrenN/cuttlefish/blob/master/506px-Cuttlefish_1_(PSF).png" height="300px" alt="Cuttlefish" />
 
 Gathers data for Papers We Love meetups from different services. Currently pulls from Meetup.com and Facebook and powers the meetup data for http://paperswelove.org.
 
