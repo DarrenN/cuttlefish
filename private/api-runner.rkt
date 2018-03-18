@@ -30,7 +30,7 @@
 ;; =======
 (define (create-logging-thread path)
   (set! logging-thread
-        (launch-log-daemon (path->complete-path path) "cuttlefish")))
+        (launch-log-daemon (path->complete-path path) "cuttlefish.log")))
 
 ;; Write JSON to files
 ;; ====================
@@ -176,10 +176,10 @@ General outline:
   ;; Builds list of channels and load with worker threads
   (define chapter-payloads
     (prepare-chapter-payloads (read-chapter-json CHAPTERS-JSON)))
-  
+
   (define work-channels (prepare-work-channels chapter-payloads))
   (define work-threads (prepare-work-threads work-channels))
-  
+
   ;; Load payloads into the channels
   (for ([chan work-channels]
         [chapters chapter-payloads])
@@ -189,7 +189,7 @@ General outline:
   (format-log "~a" "=====")
   (format-log "~a" (format "START: spinning up ~a threads"
                            THREAD-COUNT))
-  
+
   ;; We have to explicitly drop a wait on each thread or it will immediately
   ;; close before it takes work off the channels (synchronization)
   (for-each thread-wait work-threads)
