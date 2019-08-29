@@ -6,7 +6,8 @@
          "chunk-list.rkt"
          "logger.rkt"
          "workers/meetup.rkt"
-         "workers/facebook.rkt")
+         "workers/facebook.rkt"
+         "workers/github.rkt")
 
 (provide run-workers)
 
@@ -17,7 +18,8 @@
 
 (define WORKERS
   (hash "meetup" worker-meetup
-        "facebook" worker-facebook))
+        "facebook" worker-facebook
+        "github" worker-github))
 
 ;; How many threads/channels to spin up to do work
 (define THREAD-COUNT 3)
