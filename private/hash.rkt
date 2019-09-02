@@ -73,31 +73,31 @@
 (module+ test
   (require rackunit
            quickcheck)
-  
+
   (define foo (hash 'a 1
                     'b (hash 'bb 1
                              'cc (hash 'ccc 12))
                     'c "foo"))
-  
+
   ;; Returns #f is it cannot find the value
   (check-equal?
    (hash-refs '(b bb ccc) foo) #f)
-  
+
   ;; Returns fall with invalid keys
   (check-equal?
    (hash-refs '(d zz) foo) #f)
-  
+
   ;; Fails and returns failure-result
   (check-equal?
    (hash-refs '(b dd) foo "nope") "nope")
-  
+
   ;; Gets value
   (check-equal?
    (hash-refs '(b cc ccc) foo) 12)
-  
+
   ;; Non-list returns #f
   (check-equal? (hash-refs "foo" foo) #f)
-  
+
   ;; Generate a hash from a list (must be non-empty) with a value of y
   (define (not-empty-hash xs y)
     (foldr (λ (l r)
@@ -105,7 +105,7 @@
                        (hash l (hash-ref r (first xs)))))
            (hash (first xs) y)
            (rest xs)))
-  
+
   ;; It will find a value in a validly-nested hash
   (define hash-ref-has-nest
     (property ([xs (arbitrary-list
@@ -114,9 +114,9 @@
               (let* ([xss (if (empty? xs) '(1 2) xs)]
                      [hsh (not-empty-hash xss y)])
                 (equal? (hash-refs xss hsh) y))))
-  
+
   (quickcheck hash-ref-has-nest)
-  
+
   ;; It will not find a value in a validly-nested hash
   (define hash-ref-not-has-nest
     (property ([xs (arbitrary-list
@@ -125,9 +125,9 @@
               (let* ([xss (if (empty? xs) (list (random 100) (random 100)) xs)]
                      [hsh (not-empty-hash xss z)])
                 (not (equal? (hash-refs (cdr xss) hsh "f") z)))))
-  
+
   (quickcheck hash-ref-not-has-nest)
-  
+
   ;; Passing en empty list will return the hash
   (define hash-ref-empty-list
     (property ([xs (arbitrary-list
@@ -136,31 +136,30 @@
               (let* ([xss (if (empty? xs) '(1 2) xs)]
                      [hsh (not-empty-hash xss y)])
                 (equal? (hash-refs '() hsh) hsh))))
-  
+
   (quickcheck hash-ref-empty-list)
-  
+
   (define j (hash 'a (hash 'b (hash 'c 2))))
   (define k (hash 'a (hash 'd (hash 'c 2))))
 
   (check-equal? (get-in '(a b c) j) 2)
   (check-equal? (get-in '(a b) j) (hash 'c 2))
   (check-equal? (get-in '(z) j "boo") "boo")
-  
+
   (define get-a (get-in '(a)))
   (define get-b (get-in '(a b)))
   (define get-c (get-in '(a b c)))
   (define get-f (get-in '(a f)))
-  
+
   (check-equal? ((get-in '(a b c)) j) 2)
   (check-equal? ((get-in '(a b c)) k) #f)
   (check-equal? ((get-in '(a b c)) k "boo") "boo")
-  
+
   (check-equal? (get-a j) (hash-refs '(a) j))
   (check-equal? (get-b j) (hash-refs '(a b) j))
   (check-equal? (get-c j) (hash-refs '(a b c) j))
   (check-equal? (get-f j) #f)
   (check-equal? (get-f j "boo") "boo")
-  
+
   (check-equal? ((get 'a) j) (hash-ref j 'a))
   (check-equal? ((get 'z) j "foo") "foo"))
-
