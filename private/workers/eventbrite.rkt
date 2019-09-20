@@ -4,6 +4,7 @@
          gregor
          tzinfo
          simple-http
+         (except-in simple-http JSON-HEADERS)
          json
          (except-in "../hash.rkt" get))
 
@@ -14,7 +15,9 @@
 |#
 
 (define api-eventbrite-com
-    (update-ssl (update-host json-requester "www.eventbriteapi.com") #t))
+    (update-headers 
+      (update-ssl (update-host json-requester "www.eventbriteapi.com") #t)
+    '("Content-Type: text/plain"))) ;; overwrite the application/json editor because of a REST API bug (?)
     
 ;; Mash returned JSON into correct JSEXPR shape
 (define (convert-json json)
