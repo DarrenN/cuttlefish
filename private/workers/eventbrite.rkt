@@ -10,11 +10,8 @@
 (provide worker-eventbrite)
 
 #|
-"https://www.eventbriteapi.com/v3/users/me/?token=PERSONAL_OAUTH_TOKEN
+"https://www.eventbriteapi.com/v3/events/search/?expand=venue.address&organizer.id=ORG_ID&token=PERSONAL_OAUTH_TOKEN
 |#
-
-(define remaining (box #f)) ;; start as false to prevent false throttle
-(define reset (box 0))
 
 (define api-eventbrite-com
     (update-ssl (update-host json-requester "www.eventbriteapi.com") #t))
@@ -42,12 +39,7 @@
                                    'city (get-in '(venue address city) event)
                                    'postalCode (get-in '(venue address postal_code) event 'null)
                                    'lon (get-in '(venue longitude) event 'null)
-                                   'lat (get-in '(venue latitude) event 'null))
-                    'photos (for/list
-                                ([photo (get-in '(photo_album photo_sample) event '())])
-                              (hasheq 'url (get-in '(photo_link) photo)
-                                      'width 'null
-                                      'height 'null))))))
+                                   'lat (get-in '(venue latitude) event 'null))))))
 
 ;; Workers should respond with either:
 ;;
@@ -60,8 +52,8 @@
   (define title (get-in '(title) (cdr payload)))
 
     (define params
-      `(
-        (expand . "venue.address")
+      `((expand . "venue.address")
+        (organizer.id . ,api-id)
         (token . ,(hash-ref config 'eventbrite-access-token))))
 
   ;; Wrap API call with exception handlers that pass errors back up to the
@@ -76,8 +68,7 @@
           (list 'ERROR (format "Could not read data for ~a" id)))])
 
     (define response
-      (get api-eventbrite-com (format "/v3/organizations/~a/events/" api-id) #:params params))
-
+      (get api-eventbrite-com "/v3/events/search/" #:params params))
       
     ;; Return the converted JSON or an error
     (let ([json (convert-json (json-response-body response))])
