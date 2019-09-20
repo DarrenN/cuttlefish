@@ -36,13 +36,13 @@
                     'title (get-in '(name text) event)
                     'description (get-in '(description html) event)
                     'venue (hasheq 'name (get-in '(venue name) event 'null)
-                                   'address1 (get-in '(venue address_1) event)
-                                   'address2 (get-in '(venue address_2) event 'null)
-                                   'country (get-in '(venue country) event)
-                                   'city (get-in '(venue city) event)
-                                   'postalCode (get-in '(venue zip) event 'null)
-                                   'lon (get-in '(venue lon) event 'null)
-                                   'lat (get-in '(venue lat) event 'null))
+                                   'address1 (get-in '(venue address address_1) event)
+                                   'address2 (get-in '(venue address address_2) event 'null)
+                                   'country (get-in '(venue address country) event)
+                                   'city (get-in '(venue address city) event)
+                                   'postalCode (get-in '(venue address postal_code) event 'null)
+                                   'lon (get-in '(venue longitude) event 'null)
+                                   'lat (get-in '(venue latitude) event 'null))
                     'photos (for/list
                                 ([photo (get-in '(photo_album photo_sample) event '())])
                               (hasheq 'url (get-in '(photo_link) photo)
@@ -60,7 +60,9 @@
   (define title (get-in '(title) (cdr payload)))
 
     (define params
-      `((token . ,(hash-ref config 'eventbrite-access-token))))
+      `(
+        (expand . "venue.address")
+        (token . ,(hash-ref config 'eventbrite-access-token))))
 
   ;; Wrap API call with exception handlers that pass errors back up to the
   ;; worker for logging
