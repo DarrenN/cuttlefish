@@ -25,15 +25,15 @@
     (values (string->symbol (get-in '(id) event))
             (hasheq 'url (get-in '(url) event)
                     ;; convert local e.g. '2019-10-24T19:00:00' to posix
-                    ;; timestamp
-                    'time (->posix (iso8601->datetime
-                                    (get-in '(start local) event)))
+                    ;; timestamp, scaling up to millis
+                    'time (* 1000 (->posix (iso8601->datetime
+                                    (get-in '(start local) event))))
                     ;; convert named timezone e.g. 'Europe/Rome' into integer
-                    ;; offset (e.g. 3600)
-                    'utcOffset (tzoffset-utc-seconds
+                    ;; offset (e.g. 3600000)
+                    'utcOffset (* 1000 (tzoffset-utc-seconds
                                 (utc-seconds->tzoffset
                                  (get-in '(start timezone) event)
-                                 0))
+                                 0)))
 
                     'title (get-in '(name text) event)
                     'description (get-in '(description html) event)
