@@ -10,7 +10,30 @@
 (provide worker-eventbrite)
 
 #|
-"https://www.eventbriteapi.com/v3/events/search/?expand=venue.address&organizer.id=ORG_ID&token=PERSONAL_OAUTH_TOKEN
+"https://www.eventbriteapi.com/v3/users/me/events/&token=PERSONAL_OAUTH_TOKEN
+
+Configuration:
+
+  - .cuttlefishrc:
+    {
+      "eventbrite-access-tokens": {
+        "some-arbitrary-id": "PERSONAL_OAUTH_TOKEN",
+            ...
+      }
+    }
+
+  - chapters.json
+    {
+      "your-chapter": {
+          "dataService": {
+              "id": "some-arbitrary-id",
+              "adapter": "eventbrite"
+          },
+          "title": "Your-Chapter"
+      },
+      ...
+    }
+
 |#
 
 (define api-eventbrite-com
@@ -63,13 +86,12 @@
 
 (define (worker-eventbrite logger id config payload)
   (define id (car payload))
-  (define api-id (get-in '(dataService id) (cdr payload)))
+  (define api-id (string->symbol (get-in '(dataService id) (cdr payload))))
   (define title (get-in '(title) (cdr payload)))
 
   (define params
     `((expand . "venue.address")
-      (organizer.id . ,api-id)
-      (token . ,(hash-ref config 'eventbrite-access-token))))
+      (token . ,(hash-ref (hash-ref config 'eventbrite-access-tokens) api-id) )))
 
   ;; Wrap API call with exception handlers that pass errors back up to the
   ;; worker for logging
@@ -83,7 +105,7 @@
         (list 'ERROR (format "Could not read data for ~a" id)))])
 
     (define response
-      (get api-eventbrite-com "/v3/events/search/" #:params params))
+      (get api-eventbrite-com "/v3/users/me/events/" #:params params))
 
     ;; Return the converted JSON or an error
     (let ([json (convert-json (json-response-body response))])
