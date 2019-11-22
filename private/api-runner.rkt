@@ -7,6 +7,7 @@
          "logger.rkt"
          "workers/meetup.rkt"
          "workers/facebook.rkt"
+         "workers/github.rkt"
          "workers/eventbrite.rkt")
 
 (provide run-workers)
@@ -19,6 +20,7 @@
 (define WORKERS
   (hash "meetup" worker-meetup
         "facebook" worker-facebook
+        "github" worker-github
         "eventbrite" worker-eventbrite))
 
 ;; How many threads/channels to spin up to do work
