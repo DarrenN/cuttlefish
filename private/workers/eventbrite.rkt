@@ -10,7 +10,7 @@
 (provide worker-eventbrite)
 
 #|
-"https://www.eventbriteapi.com/v3/users/me/events/&token=PERSONAL_OAUTH_TOKEN
+"https://www.eventbriteapi.com/v3/organizations/YOUR_ORG_ID/events/?token=PERSONAL_OAUTH_TOKEN
 
 Configuration:
 
@@ -27,12 +27,17 @@ Configuration:
       "your-chapter": {
           "dataService": {
               "id": "some-arbitrary-id",
+              "organization": "YOUR_ORG_ID",
               "adapter": "eventbrite"
           },
           "title": "Your-Chapter"
       },
       ...
     }
+
+You can fetch YOUR_ORG_ID with:
+
+https://www.eventbriteapi.com/v3/users/me/organizations/?token=PERSONAL_OAUTH_TOKEN
 
 |#
 
@@ -60,7 +65,7 @@ Configuration:
     ;; scale up to millis, move to GMT
     (define utcTimestamp (- (* 1000 timestamp) utcOffset))
 
-    (values (string->symbol (get-in '(id) event))
+    (values (string->symbol (number->string utcTimestamp)) ;;(get-in '(id) event)
             (hasheq 'url (get-in '(url) event)
                     'time utcTimestamp
                     'utcOffset utcOffset
@@ -87,6 +92,7 @@ Configuration:
 (define (worker-eventbrite logger id config payload)
   (define id (car payload))
   (define api-id (string->symbol (get-in '(dataService id) (cdr payload))))
+  (define org-id (string->symbol (get-in '(dataService organization) (cdr payload))))
   (define title (get-in '(title) (cdr payload)))
 
   (define params
@@ -105,7 +111,8 @@ Configuration:
         (list 'ERROR (format "Could not read data for ~a" id)))])
 
     (define response
-      (get api-eventbrite-com "/v3/users/me/events/" #:params params))
+      (get api-eventbrite-com (format "/v3/organizations/~a/events/" org-id) #:params params))
+      ;;(get api-eventbrite-com "/v3/users/me/events/" #:params params))
 
     ;; Return the converted JSON or an error
     (let ([json (convert-json (json-response-body response))])
