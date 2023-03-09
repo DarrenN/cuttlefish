@@ -1,3 +1,5 @@
-chapter-json-file = /tmp/chapters.json
-json-out-path = /tmp
-logfile-path = /tmp
+{
+    "chapter-json-file": "private/data/chapters.json",
+    "json-out-path": "/tmp/cuttlefish",
+    "logfile-path": "/tmp/cuttlefish"
+}
