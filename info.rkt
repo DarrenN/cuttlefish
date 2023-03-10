@@ -6,6 +6,7 @@
                "quickcheck"
                "rackunit-lib"
                "simple-http"
+               "tzinfo"
                "yaml"))
 (define build-deps '("scribble-lib" "racket-doc"))
 (define scribblings '(("scribblings/cuttlefish.scrbl" ())))
