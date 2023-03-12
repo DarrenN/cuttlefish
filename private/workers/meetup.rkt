@@ -14,11 +14,14 @@
         [reset (unbox reset)])
     (when (and (not (false? remain)) (< remain 3))
       (logger "~a" (format "THROTTLED: meetup worker for ~a seconds (~a reqs remain)" reset remain))
-      (sleep (string->number reset)))))
+      (sleep (+ 2 (string->number reset))))))
 
-(define (update-throttle headers)
+(define (update-throttle logger headers)
   (let ([remain (car (get-in '(X-Ratelimit-Remaining) headers))]
         [res (car (get-in '(X-Ratelimit-Reset) headers))])
+    ;(logger
+    ; "~a"
+    ; (format "X-Ratelimit-Remaining: ~a | X-Reatelimit-Reset: ~a" remain res))
     (set-box! remaining (string->number remain))
     (set-box! reset res)))
 
@@ -80,7 +83,7 @@
     (define response
       (get api-meetup-com (format "/~a/events" api-id) #:params params))
 
-    (update-throttle (json-response-headers response))
+    (update-throttle logger (json-response-headers response))
 
     ;; TODO: remove this
     ;(printf "remain: ~a | reset: ~a\n" (unbox remaining) (unbox reset))

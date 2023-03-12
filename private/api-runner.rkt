@@ -127,9 +127,19 @@ General outline:
          [(equal? adapter 'DONE)
           (channel-put result-channel 'DONE)]
          [(hash-has-key? WORKERS adapter)
-          (write-response (list config
-                                ((hash-ref WORKERS adapter)
-                                 format-log thread-id config item)))
+          (write-response
+           (list
+            config
+            (with-handlers
+              ([exn:fail?
+                (λ (e)
+                  (format-log "WORKER ERROR: ~a" e)
+                  (list
+                   'ERROR
+                   (format "Adapter ~a failed in thread ~a for ~a"
+                           adapter thread-id item)))])
+              ((hash-ref WORKERS adapter)
+               format-log thread-id config item))))
           (loop)]
          [else
           (channel-put
